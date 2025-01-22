@@ -123,6 +123,7 @@ const Home = () => {
       <button onClick={exportToPDF}>Save as PDF</button>
       <div
         ref={canvasRef}
+        onMouseDown={() => setSelectedElementId(null)}
         style={{
           width: "800px",
           height: "600px",
