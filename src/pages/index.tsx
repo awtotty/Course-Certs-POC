@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
-import "react-resizable/css/styles.css";
 
 const Home = () => {
   const [elements, setElements] = useState<
@@ -40,15 +39,16 @@ const Home = () => {
     ]);
   };
 
-  const addImageElement = () => {
+  const addImageElement = (file: File) => {
     const id = Date.now().toString();
-    const url = prompt("Enter image URL:");
-    if (url) {
+    const reader = new FileReader();
+    reader.onload = () => {
       setElements((prev) => [
         ...prev,
-        { id, type: "image", content: url, x: 50, y: 50, width: 100, height: 100 },
+        { id, type: "image", content: reader.result as string, x: 50, y: 50, width: 100, height: 100 },
       ]);
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
   const deleteElement = (id: string) => {
@@ -73,17 +73,6 @@ const Home = () => {
     }
   };
 
-  const handleResize = (
-    id: string,
-    data: { width: number; height: number }
-  ) => {
-    setElements((prev) =>
-      prev.map((el) =>
-        el.id === id ? { ...el, width: data.width, height: data.height } : el
-      )
-    );
-  };
-
   const exportToPDF = async () => {
     if (canvasRef.current) {
       const canvas = await html2canvas(canvasRef.current);
@@ -98,7 +87,15 @@ const Home = () => {
     <div style={{ padding: "20px" }}>
       <h1>Custom PDF Creator</h1>
       <button onClick={addTextElement}>Add Text</button>
-      <button onClick={addImageElement}>Add Image</button>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            addImageElement(e.target.files[0]);
+          }
+        }}
+      />
       <button onClick={exportToPDF}>Save as PDF</button>
       <div
         ref={canvasRef}
@@ -184,26 +181,23 @@ const Home = () => {
           >
             Decrease Font Size
           </button>
-          <button
-            onClick={() => {
-              const color = prompt("Enter font color (e.g., #000000 or red):");
-              if (color) {
-                updateTextElement(selectedElementId, { fontColor: color });
-              }
-            }}
+          <input
+            type="color"
+            onChange={(e) =>
+              updateTextElement(selectedElementId, { fontColor: e.target.value })
+            }
+            value={elements.find((el) => el.id === selectedElementId)?.fontColor || "#000000"}
+          />
+          <select
+            onChange={(e) =>
+              updateTextElement(selectedElementId, { fontFamily: e.target.value })
+            }
+            value={elements.find((el) => el.id === selectedElementId)?.fontFamily || "Arial"}
           >
-            Change Font Color
-          </button>
-          <button
-            onClick={() => {
-              const font = prompt("Enter font family (e.g., Arial, Times New Roman):");
-              if (font) {
-                updateTextElement(selectedElementId, { fontFamily: font });
-              }
-            }}
-          >
-            Change Font
-          </button>
+            <option value="Arial">Arial</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Courier New">Courier New</option>
+          </select>
         </div>
       )}
     </div>
