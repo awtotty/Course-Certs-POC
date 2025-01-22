@@ -20,6 +20,7 @@ const Home = () => {
     }[]
   >([]);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [draggingElement, setDraggingElement] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const addTextElement = () => {
@@ -64,15 +65,26 @@ const Home = () => {
     );
   };
 
-  const handleDrag = (id: string, e: React.DragEvent<HTMLDivElement>) => {
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (rect) {
+  const handleMouseDown = (id: string, e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    setDraggingElement(id);
+    setSelectedElementId(id);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (draggingElement && canvasRef.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
+
       setElements((prev) =>
-        prev.map((el) => (el.id === id ? { ...el, x, y } : el))
+        prev.map((el) => (el.id === draggingElement ? { ...el, x, y } : el))
       );
     }
+  };
+
+  const handleMouseUp = () => {
+    setDraggingElement(null);
   };
 
   const handleResize = (id: string, width: number, height: number) => {
@@ -92,14 +104,18 @@ const Home = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div
+      style={{ padding: "20px" }}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+    >
       <h1>Custom PDF Creator</h1>
       <button onClick={addTextElement}>Add Text</button>
       <input
         type="file"
         accept="image/*"
         onChange={(e) => {
-          if (e.target.files && e.target.files[0]) {
+          if (e.target.files?.[0]) {
             addImageElement(e.target.files[0]);
           }
         }}
@@ -119,10 +135,7 @@ const Home = () => {
       >
         {elements.map((el) => (
           <div
-            draggable
             key={el.id}
-            onClick={() => setSelectedElementId(el.id)}
-            onDragEnd={(e) => handleDrag(el.id, e)}
             style={{
               position: "absolute",
               left: el.x,
@@ -133,6 +146,7 @@ const Home = () => {
             {el.type === "text" ? (
               <div
                 contentEditable
+                onMouseDown={(e) => handleMouseDown(el.id, e)}
                 suppressContentEditableWarning
                 style={{
                   fontSize: el.fontSize,
@@ -163,8 +177,7 @@ const Home = () => {
                 <img
                   src={el.content}
                   alt="User Element"
-                  draggable
-                  onDragEnd={(e) => handleDrag(el.id, e)}
+                  onMouseDown={(e) => handleMouseDown(el.id, e)}
                   style={{
                     width: "100%",
                     height: "100%",
