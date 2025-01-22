@@ -96,42 +96,95 @@ const Home = () => {
   const exportToPDF = async () => {
     if (canvasRef.current) {
       const canvas = await html2canvas(canvasRef.current);
+
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "px",
+        format: [canvasWidth, canvasHeight],
+      });
+
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "px", [canvas.width, canvas.height]);
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+      pdf.addImage(imgData, "PNG", 0, 0, canvasWidth, canvasHeight);
+
       pdf.save("custom_design.pdf");
     }
   };
 
   return (
     <div
-      style={{ padding: "20px" }}
+      style={{
+        fontFamily: "Arial, sans-serif",
+        color: "#333",
+        lineHeight: "1.5",
+        padding: "20px",
+      }}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
     >
-      <h1>Custom PDF Creator</h1>
-      <button onClick={addTextElement}>Add Text</button>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          if (e.target.files?.[0]) {
-            addImageElement(e.target.files[0]);
-          }
-        }}
-      />
-      <button onClick={exportToPDF}>Save as PDF</button>
+      <h1 style={{ fontSize: "24px", marginBottom: "20px" }}>Custom PDF Creator</h1>
+      <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
+        <button
+          onClick={addTextElement}
+          style={{
+            backgroundColor: "slateblue",
+            color: "#fff",
+            border: "none",
+            padding: "10px 15px",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          Add Text
+        </button>
+        <label
+          style={{
+            backgroundColor: "slateblue",
+            color: "#fff",
+            padding: "10px 15px",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          Upload Image
+          <input
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              if (e.target.files?.[0]) {
+                addImageElement(e.target.files[0]);
+              }
+            }}
+          />
+        </label>
+        <button
+          onClick={exportToPDF}
+          style={{
+            backgroundColor: "gray",
+            color: "#fff",
+            border: "none",
+            padding: "10px 15px",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          Preview PDF
+        </button>
+      </div>
       <div
         ref={canvasRef}
         onMouseDown={() => setSelectedElementId(null)}
         style={{
           width: "800px",
           height: "600px",
-          border: "1px solid #000",
-          marginTop: "20px",
+          border: "2px dashed #ccc",
+          borderRadius: "8px",
+          backgroundColor: "#f9f9f9",
           position: "relative",
           overflow: "hidden",
-          background: "#fff",
         }}
       >
         {elements.map((el) => (
@@ -153,12 +206,10 @@ const Home = () => {
                   fontSize: el.fontSize,
                   color: el.fontColor,
                   fontFamily: el.fontFamily,
-                  width: "100%",
-                  height: "100%",
-                  overflow: "hidden",
-                  wordWrap: "break-word",
-                  textAlign: "center",
-                  border: selectedElementId === el.id ? "1px solid #ccc" : "none",
+                  padding: "2px",
+                  backgroundColor: "#ffffff",
+                  borderRadius: "4px",
+                  border: selectedElementId === el.id ? "1px solid #4CAF50" : "none",
                 }}
                 onBlur={(e) =>
                   updateTextElement(el.id, { content: e.currentTarget.innerText })
@@ -183,6 +234,7 @@ const Home = () => {
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
+                    borderRadius: "4px",
                   }}
                 />
               </ResizableBox>
@@ -191,14 +243,44 @@ const Home = () => {
         ))}
       </div>
       {selectedElementId && (
-        <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
-          <button onClick={() => deleteElement(selectedElementId)}>Delete</button>
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "10px",
+            backgroundColor: "#f1f1f1",
+            borderRadius: "8px",
+            display: "flex",
+            gap: "10px",
+            alignItems: "center",
+          }}
+        >
+          <button
+            onClick={() => deleteElement(selectedElementId)}
+            style={{
+              backgroundColor: "#e91e63",
+              color: "#fff",
+              padding: "8px 12px",
+              borderRadius: "4px",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Delete
+          </button>
           <button
             onClick={() =>
               updateTextElement(selectedElementId, {
                 fontSize: (elements.find((el) => el.id === selectedElementId)?.fontSize || 16) + 2,
               })
             }
+            style={{
+              backgroundColor: "gray",
+              color: "#fff",
+              padding: "8px 12px",
+              borderRadius: "4px",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             Increase Font Size
           </button>
@@ -211,6 +293,14 @@ const Home = () => {
                 ),
               })
             }
+            style={{
+              backgroundColor: "gray",
+              color: "#fff",
+              padding: "8px 12px",
+              borderRadius: "4px",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             Decrease Font Size
           </button>
@@ -220,12 +310,23 @@ const Home = () => {
               updateTextElement(selectedElementId, { fontColor: e.target.value })
             }
             value={elements.find((el) => el.id === selectedElementId)?.fontColor || "#000000"}
+            style={{
+              width: "40px",
+              height: "40px",
+              border: "none",
+              cursor: "pointer",
+            }}
           />
           <select
             onChange={(e) =>
               updateTextElement(selectedElementId, { fontFamily: e.target.value })
             }
             value={elements.find((el) => el.id === selectedElementId)?.fontFamily || "Arial"}
+            style={{
+              padding: "8px",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+            }}
           >
             <option value="Arial">Arial</option>
             <option value="Times New Roman">Times New Roman</option>
