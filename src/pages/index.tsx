@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import "react-resizable/css/styles.css";
+import { ResizableBox } from "react-resizable";
 
 const Home = () => {
   const [elements, setElements] = useState<
@@ -71,6 +73,12 @@ const Home = () => {
         prev.map((el) => (el.id === id ? { ...el, x, y } : el))
       );
     }
+  };
+
+  const handleResize = (id: string, width: number, height: number) => {
+    setElements((prev) =>
+      prev.map((el) => (el.id === id ? { ...el, width, height } : el))
+    );
   };
 
   const exportToPDF = async () => {
@@ -144,15 +152,26 @@ const Home = () => {
                 {el.content}
               </div>
             ) : (
-              <img
-                src={el.content}
-                alt="User Element"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
-              />
+              <ResizableBox
+                width={el.width}
+                height={el.height}
+                resizeHandles={["se"]}
+                onResizeStop={(e, data) =>
+                  handleResize(el.id, data.size.width, data.size.height)
+                }
+              >
+                <img
+                  src={el.content}
+                  alt="User Element"
+                  draggable
+                  onDragEnd={(e) => handleDrag(el.id, e)}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              </ResizableBox>
             )}
           </div>
         ))}
